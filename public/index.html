@@ -412,7 +412,10 @@
   <script>
     async function loadQuote() {
       try {
-        const res = await fetch('/api/quote');
+        const params = new URLSearchParams(window.location.search);
+        const qParam = params.get('q');
+        const url = qParam !== null ? `/api/quote/${qParam}` : '/api/quote';
+        const res = await fetch(url);
         const data = await res.json();
         displayQuote(data);
         document.getElementById('loading').style.display = 'none';

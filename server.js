@@ -72,7 +72,7 @@ h1{text-align:center;font-size:1.8rem;margin-bottom:1.5rem;color:#ffd166}
 <div class="grid">`;
 
   quotes.forEach((q, i) => {
-    html += `<div class="card">
+    html += `<div class="card" onclick="window.location='/?q=${i}'" style="cursor:pointer">
 <img src="${q.image}" alt="${q.name_he}">
 <div class="info">
 <span class="num">#${i + 1}</span>
