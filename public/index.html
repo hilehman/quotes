@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מגמת אימון גופני - תיכון עודד</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #ff6b35;
+      --primary-dark: #e55a2b;
+      --secondary: #004e89;
+      --accent: #ffd166;
+      --bg-dark: #0a1628;
+      --bg-card: rgba(255,255,255,0.07);
+      --text-light: #f0f0f0;
+      --text-muted: #a0aec0;
+    }
+
+    body {
+      font-family: 'Heebo', 'Rubik', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      direction: rtl;
+    }
+
+    /* Animated background */
+    .bg-animation {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-animation .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .orb:nth-child(1) {
+      width: 400px; height: 400px;
+      background: var(--primary);
+      top: -100px; right: -100px;
+      animation-delay: 0s;
+    }
+
+    .orb:nth-child(2) {
+      width: 350px; height: 350px;
+      background: var(--secondary);
+      bottom: -80px; left: -80px;
+      animation-delay: -3s;
+    }
+
+    .orb:nth-child(3) {
+      width: 250px; height: 250px;
+      background: var(--accent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    /* Header */
+    .header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+
+    .header h1 {
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--primary), var(--accent));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+      letter-spacing: -0.5px;
+    }
+
+    .header .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+      font-weight: 400;
+    }
+
+    @keyframes shimmer {
+      to { background-position: 200% center; }
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 60px; height: 60px;
+      border: 4px solid rgba(255,255,255,0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Main card */
+    .card-container {
+      position: relative;
+      z-index: 10;
+      max-width: 700px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: cardIn 0.8s ease-out forwards;
+      animation-delay: 0.2s;
+    }
+
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+
+    /* Athlete image area */
+    .athlete-image-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+    }
+
+    .athlete-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .athlete-image-wrap img.loaded {
+      opacity: 1;
+    }
+
+    .athlete-image-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 50%;
+      background: linear-gradient(transparent, var(--bg-dark));
+      pointer-events: none;
+    }
+
+    .athlete-name-overlay {
+      position: absolute;
+      bottom: 1rem;
+      right: 1.5rem;
+      z-index: 2;
+    }
+
+    .athlete-name-overlay h2 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      line-height: 1.2;
+    }
+
+    .sport-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 0.4rem;
+    }
+
+    /* Quote section */
+    .quote-section {
+      padding: 2rem 2rem 1.5rem;
+    }
+
+    .quote-icon {
+      font-size: 2.5rem;
+      color: var(--primary);
+      opacity: 0.7;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .quote-original {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      direction: ltr;
+      text-align: left;
+      font-family: 'Rubik', sans-serif;
+    }
+
+    .quote-hebrew {
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      font-weight: 700;
+      color: var(--text-light);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-right: 1rem;
+      border-right: 3px solid var(--primary);
+    }
+
+    /* Bio section */
+    .bio-section {
+      padding: 0 2rem 1.5rem;
+    }
+
+    .bio-text {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Wikipedia link */
+    .wiki-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--secondary), #006aaa);
+      color: white;
+      text-decoration: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,78,137,0.3);
+    }
+
+    .wiki-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,78,137,0.4);
+    }
+
+    .wiki-link svg {
+      width: 20px; height: 20px;
+      fill: currentColor;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to left, transparent, rgba(255,255,255,0.1), transparent);
+      margin: 0 2rem;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 1.5rem 2rem 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* Number badge */
+    .number-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 5;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 0.9rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Particles */
+    .particle {
+      position: fixed;
+      width: 3px; height: 3px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      z-index: 1;
+      animation: particleFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes particleFloat {
+      0% { opacity: 0; transform: translateY(100vh) scale(0); }
+      20% { opacity: 0.6; }
+      80% { opacity: 0.3; }
+      100% { opacity: 0; transform: translateY(-20vh) scale(1); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .quote-section, .bio-section { padding-left: 1.2rem; padding-right: 1.2rem; }
+      .athlete-name-overlay { right: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background animation -->
+  <div class="bg-animation">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <!-- Floating particles -->
+  <script>
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 6 + 's';
+      p.style.animationDuration = (4 + Math.random() * 4) + 's';
+      document.body.appendChild(p);
+    }
+  </script>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>מגמת אימון גופני - תיכון עודד</h1>
+    <p class="subtitle">השראה מהגדולים בספורט העולמי</p>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>טוען את הציטוט שלך...</p>
+  </div>
+
+  <!-- Main card (hidden until loaded) -->
+  <div class="card-container" id="card" style="display:none">
+    <div class="card">
+      <div class="athlete-image-wrap">
+        <div class="number-badge" id="badge"></div>
+        <img id="athlete-img" alt="" />
+        <div class="athlete-name-overlay">
+          <h2 id="athlete-name"></h2>
+          <span class="sport-badge" id="athlete-sport"></span>
+        </div>
+      </div>
+
+      <div class="quote-section">
+        <div class="quote-icon">&#x275D;</div>
+        <p class="quote-original" id="quote-en"></p>
+        <p class="quote-hebrew" id="quote-he"></p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="bio-section">
+        <p class="bio-text" id="bio"></p>
+        <a class="wiki-link" id="wiki-link" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M12.09 13.119c-.936 1.932-2.217 4.548-2.853 5.728-.616 1.074-1.127.931-1.532.029-1.406-3.321-4.293-9.144-5.651-12.409-.251-.601-.441-.987-.619-1.139-.181-.15-.554-.24-1.122-.271C.103 5.033 0 4.982 0 4.898v-.455l.052-.045c.924-.005 5.401 0 5.401 0l.051.045v.434c0 .119-.075.176-.225.176l-.564.031c-.485.029-.727.164-.727.407 0 .2.089.456.253.753l4.176 8.981 1.691-3.52-1.691-3.617c-.368-.756-.725-1.236-1.073-1.44-.348-.203-.762-.311-1.242-.324-.157 0-.236-.059-.236-.176v-.434l.051-.045h4.961l.051.045v.434c0 .117-.062.176-.188.176-.609.037-.942.108-1.004.212-.061.104-.023.39.115.859l1.143 2.525 1.219-2.441c.174-.395.253-.717.239-.969-.014-.258-.147-.424-.396-.499-.256-.073-.588-.112-.993-.112-.157 0-.236-.059-.236-.176v-.434l.051-.045c.965-.005 4.361 0 4.361 0l.051.045v.434c0 .117-.074.176-.22.176-.437.012-.773.078-1.006.199-.235.12-.514.459-.842 1.02l-1.794 3.463 1.985 4.157c.616-1.27 2.337-4.837 3.327-6.885.27-.545.396-.96.396-1.233 0-.396-.244-.614-.727-.65l-.6-.041c-.145 0-.217-.059-.217-.176v-.434l.052-.045c.716-.005 3.828 0 3.828 0l.052.045v.434c0 .117-.063.176-.189.176-.517 0-.968.193-1.355.581-.386.389-.861 1.166-1.424 2.331L12.09 13.119z"/></svg>
+          קראו עוד בוויקיפדיה
+        </a>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="footer">
+        <p>מגמת אימון גופני - תיכון עודד &copy; 2026</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadQuote() {
+      try {
+        const res = await fetch('/api/quote');
+        const data = await res.json();
+        const q = data.quote;
+
+        document.getElementById('badge').textContent = `#${data.index + 1} מתוך ${data.total}`;
+        document.getElementById('athlete-name').textContent = q.name_he;
+        document.getElementById('athlete-sport').textContent = q.sport_he;
+        document.getElementById('quote-en').textContent = `"${q.quote_en}"`;
+        document.getElementById('quote-he').textContent = q.quote_he;
+        document.getElementById('bio').textContent = q.bio_he;
+
+        const img = document.getElementById('athlete-img');
+        img.alt = q.name_he;
+        img.onload = () => img.classList.add('loaded');
+        img.onerror = () => {
+          // Fallback: try loading from a different source or show placeholder
+          img.style.display = 'none';
+        };
+        img.src = q.image;
+
+        const wikiLink = document.getElementById('wiki-link');
+        wikiLink.href = q.wikipedia;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('card').style.display = 'block';
+      } catch (err) {
+        console.error('Error loading quote:', err);
+        document.getElementById('loading').innerHTML =
+          '<p style="color:#f87171">שגיאה בטעינת הציטוט. נסו לרענן את הדף.</p>';
+      }
+    }
+
+    loadQuote();
+  </script>
+</body>
+</html>
