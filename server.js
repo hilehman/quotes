@@ -39,6 +39,16 @@ app.get('/api/quote', (req, res) => {
   res.json({ quote: quotes[idx], index: idx, total });
 });
 
+// Secret endpoint: get any quote by index (for testing navigation)
+app.get('/api/quote/:index', (req, res) => {
+  const total = quotes.length;
+  const idx = parseInt(req.params.index, 10);
+  if (isNaN(idx) || idx < 0 || idx >= total) {
+    return res.status(404).json({ error: 'Invalid index' });
+  }
+  res.json({ quote: quotes[idx], index: idx, total });
+});
+
 // Secret admin page - all quotes overview
 app.get('/admin-k9x7m', (req, res) => {
   let html = `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">

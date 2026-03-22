@@ -158,7 +158,7 @@
     .athlete-image-wrap {
       position: relative;
       width: 100%;
-      aspect-ratio: 16/9;
+      aspect-ratio: 4/3;
       overflow: hidden;
       background: linear-gradient(135deg, #1a1a2e, #16213e);
     }
@@ -414,27 +414,7 @@
       try {
         const res = await fetch('/api/quote');
         const data = await res.json();
-        const q = data.quote;
-
-        document.getElementById('badge').textContent = `#${data.index + 1} מתוך ${data.total}`;
-        document.getElementById('athlete-name').textContent = q.name_he;
-        document.getElementById('athlete-sport').textContent = q.sport_he;
-        document.getElementById('quote-en').textContent = `"${q.quote_en}"`;
-        document.getElementById('quote-he').textContent = q.quote_he;
-        document.getElementById('bio').textContent = q.bio_he;
-
-        const img = document.getElementById('athlete-img');
-        img.alt = q.name_he;
-        img.onload = () => img.classList.add('loaded');
-        img.onerror = () => {
-          // Fallback: try loading from a different source or show placeholder
-          img.style.display = 'none';
-        };
-        img.src = q.image;
-
-        const wikiLink = document.getElementById('wiki-link');
-        wikiLink.href = q.wikipedia;
-
+        displayQuote(data);
         document.getElementById('loading').style.display = 'none';
         document.getElementById('card').style.display = 'block';
       } catch (err) {
@@ -445,6 +425,53 @@
     }
 
     loadQuote();
+
+    // Secret navigation: arrow keys to browse all quotes
+    let currentIndex = null;
+    let totalQuotes = null;
+
+    function displayQuote(data) {
+      const q = data.quote;
+      currentIndex = data.index;
+      totalQuotes = data.total;
+
+      document.getElementById('badge').textContent = `#${data.index + 1} מתוך ${data.total}`;
+      document.getElementById('athlete-name').textContent = q.name_he;
+      document.getElementById('athlete-sport').textContent = q.sport_he;
+      document.getElementById('quote-en').textContent = `"${q.quote_en}"`;
+      document.getElementById('quote-he').textContent = q.quote_he;
+      document.getElementById('bio').textContent = q.bio_he;
+
+      const img = document.getElementById('athlete-img');
+      img.classList.remove('loaded');
+      img.alt = q.name_he;
+      img.style.display = '';
+      img.onload = () => img.classList.add('loaded');
+      img.onerror = () => { img.style.display = 'none'; };
+      img.src = q.image;
+
+      document.getElementById('wiki-link').href = q.wikipedia;
+    }
+
+    document.addEventListener('keydown', async (e) => {
+      if (currentIndex === null || totalQuotes === null) return;
+      let newIndex = null;
+      if (e.key === 'ArrowRight') {
+        newIndex = (currentIndex - 1 + totalQuotes) % totalQuotes;
+      } else if (e.key === 'ArrowLeft') {
+        newIndex = (currentIndex + 1) % totalQuotes;
+      }
+      if (newIndex !== null) {
+        e.preventDefault();
+        try {
+          const res = await fetch(`/api/quote/${newIndex}`);
+          const data = await res.json();
+          displayQuote(data);
+        } catch (err) {
+          console.error('Error navigating:', err);
+        }
+      }
+    });
   </script>
 </body>
 </html>
